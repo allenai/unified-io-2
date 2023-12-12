@@ -1,0 +1,36 @@
+# type: ignore
+
+# T5.1.1 Large model.
+
+include 't5x/examples/unified_io/t5_1_1/base.gin'  # imports vocab, optimizer and model.
+
+EMBED_DIM = 16
+MLP_DIM = 32
+NUM_HEADS = 4
+HEAD_DIM = 16
+NUM_RESAMPLER_LAYER = 1
+
+from t5x.examples.unified_io import config
+network.Transformer.config = @config.T5Config()
+config.T5Config:
+  emb_dim = %EMBED_DIM
+  num_heads = %NUM_HEADS
+  num_encoder_layers = 1
+  num_decoder_layers = 1
+  head_dim = %HEAD_DIM
+  mlp_dim = %MLP_DIM
+
+config.ImageResamplerConfig:
+  emb_dim = %EMBED_DIM
+  num_heads = %NUM_HEADS
+  num_layers = %NUM_RESAMPLER_LAYER
+  head_dim = %HEAD_DIM
+  mlp_dim = %MLP_DIM
+
+config.AudioResamplerConfig:
+  emb_dim = %EMBED_DIM
+  num_heads = %NUM_HEADS
+  num_layers = %NUM_RESAMPLER_LAYER
+  head_dim = %HEAD_DIM
+  mlp_dim = %MLP_DIM
+

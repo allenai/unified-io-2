@@ -1,0 +1,120 @@
+# Fine tune on referring expression, required parameters:
+# INITIAL_CHECKPOINT_PATH
+# MODEL_DIR
+
+from __gin__ import dynamic_registration
+import __main__ as train_script
+
+# Register necessary SeqIO Tasks/Mixtures.
+
+from t5x.examples.unified_io.data import tasks
+from t5x.examples.unified_io import aux_fns
+from t5x.examples.unified_io import models
+from t5x import partitioning
+from t5x import trainer
+import seqio
+from t5x.examples.unified_io import packing
+from t5x import utils as t5x_utils
+from t5x.examples.unified_io import config
+
+
+include 't5x/configs/runs/multitask.gin'
+
+MIXTURE_OR_TASK_NAME = "refcoco_unc"
+MIXTURE_OR_TASK_NAME_EVAL = "refcoco_unc"
+
+
+TRAIN_STEPS = 3_100_000  # 100000 after 3million pre-training steps
+DROPOUT_RATE = 0.0
+BATCH_SIZE = 128
+EVAL_STEPS = 50
+
+
+train_script.train:
+  eval_period = 2500
+  stats_period = 500
+  partitioner = @partitioning.PjitPartitioner()
+  use_wandb = True
+  concurrent_metrics = False
+  infer_eval_dataset_cfg = @train_infer/t5x_utils.DatasetConfig()
+
+
+t5x_utils.SaveCheckpointConfig:
+  period = 20000
+
+
+train_infer/t5x_utils.DatasetConfig:
+  mixture_or_task_name = %MIXTURE_OR_TASK_NAME_EVAL
+  task_feature_lengths = %TASK_FEATURE_LENGTHS_EVAL
+  split = 'validation'
+  batch_size = %BATCH_SIZE
+  shuffle = False
+  seed = 42
+  use_cached = %USE_CACHED_TASKS
+  pack = False
+
+
+partitioning.PjitPartitioner.num_partitions = 4
+
+from t5x.examples.unified_io import utils
+from t5x.examples.unified_io import modality_processing
+
+# Only load the needed modalities
+modality_processing.get_input_modalities.input_modality=["image", "text"]
+modality_processing.get_target_modalities.target_modality=["text"]
+
+
+TEXT_INPUT_LEN = 256
+TEXT_TARGET_LEN = 32
+IMAGE_SAMPLES = 1.0
+
+TASK_FEATURE_LENGTHS_TRAIN = {
+    "text_inputs": %TEXT_INPUT_LEN,
+    "text_targets": %TEXT_TARGET_LEN,
+    "image_input_samples": %IMAGE_SAMPLES,
+    "image_history_input_samples": 128,
+    "audio_input_samples": 64,
+    "audio_history_input_samples": 64,
+    "num_frames": 4,
+    "is_training": True,
+}
+
+
+TASK_FEATURE_LENGTHS_EVAL = {
+    "text_inputs": %TEXT_INPUT_LEN,
+    "text_targets": %TEXT_TARGET_LEN,
+    "image_input_samples": None,
+    "image_history_input_samples": 128,
+    "audio_input_samples": 64,
+    "audio_history_input_samples": 64,
+    "num_frames": 4,
+    "is_training": False,
+}
+
+models.EncoderDecoderModel.predict_batch_with_aux:
+    length = %TEXT_TARGET_LEN
+    modality = "text"
+
+
+t5x_utils.create_learning_rate_scheduler:
+  factors = 'constant * linear_warmup * rsqrt_decay'
+  # Generally for fine-tuning we half the learning rate
+  base_learning_rate = 0.5
+  warmup_steps = 2000  # 10k to keep consistent with T5/MTF defaults.
+
+
+from t5x import adafactor
+OPTIMIZER = @adafactor.Adafactor()
+adafactor.Adafactor:
+  decay_rate = 0.8
+  beta1 = 0.9
+  step_offset = 0
+  logical_factor_rules = @adafactor.standard_logical_factor_rules()
+  global_norm_clip_threshold = 1.0
+  skip_nan_updates = True
+
+
+import t5x.examples.unified_io.evaluator as uio_evaluator
+uio_evaluator.UnifiedIOEvaluator:
+  num_examples = 10000
+  logger_cls = [@seqio.PyLoggingLogger, @seqio.TensorBoardLogger, @utils.WandbMetricsLogger]

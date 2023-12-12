@@ -1,0 +1,66 @@
+# type: ignore
+
+# T5.1.1 XL model.
+
+include 't5x/examples/unified_io/t5_1_1/xl.gin'  # imports vocab, optimizer and model.
+
+EMBED_DIM = 1024
+MLP_DIM = 2560
+NUM_HEADS = 16
+HEAD_DIM = 64
+
+from t5x.examples.unified_io import config
+# ------------------- Network specification overrides --------------------------
+network.Transformer.config = @config.T5Config()
+config.T5Config:
+  vocab_size = 33280  # vocab size rounded to a multiple of 128 for TPU efficiency
+  image_vocab_size = 16512 # vocab size rounded to a multiple of 128 for TPU efficiency
+  image_patch_size = 16
+  audio_vocab_size = 8320 # vocab size rounded to a multiple of 128 for TPU efficiency
+  audio_patch_size = 16
+  dtype = 'bfloat16'
+  emb_dim = 3072
+  num_heads = 24
+  num_encoder_layers = 24
+  num_decoder_layers = 24
+  head_dim = 128
+  mlp_dim = 8192
+  mlp_activations = ('silu', 'linear')
+  dropout_rate = %DROPOUT_RATE
+  logits_via_embedding = True
+  float32_attention_logits = True
+  decoder_xattention_internval = 1
+
+config.ImageResamplerConfig:
+  dtype = 'bfloat16'
+  resampler_type = 'perceiver'
+  emb_dim = 1024
+  num_heads = 16
+  head_dim = 64
+  mlp_dim = 4096
+  num_layers = 2
+  xattention_index = (0, 1)
+  dropout_broadcast_dims = (-2,)
+  mlp_activations = ('gelu',)
+  max_frames = 8
+  xattn_qk_norm = False
+  xattn_scaled_cosine = True
+  attn_qk_norm = False
+  attn_scaled_cosine = True
+
+config.AudioResamplerConfig:
+  resampler_type = 'perceiver'
+  dtype = 'bfloat16'
+  emb_dim = 1024
+  num_heads = 16
+  head_dim = 64
+  mlp_dim = 4096
+  num_layers = 2
+  xattention_index = (0, 1)
+  dropout_broadcast_dims = (-2,)
+  mlp_activations = ('gelu',)
+  max_frames = 8
+  xattn_qk_norm = False
+  xattn_scaled_cosine = True
+  attn_qk_norm = False
+  attn_scaled_cosine = True

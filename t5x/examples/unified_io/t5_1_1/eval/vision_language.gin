@@ -1,0 +1,38 @@
+from __gin__ import dynamic_registration
+include 't5x/configs/runs/eval.gin'
+
+from t5x.examples.unified_io import aux_fns
+
+# IMPORTANT: This assumes pretty short prompts/output, change if needed
+TEXT_INPUTS = 128
+TEXT_DECODER_LENGTH = 32
+IMAGE_INPUT_SAMPLES = None
+
+DROPOUT_RATE = 0.0  # might be required by an imported model config
+
+TASK_FEATURE_LENGTHS = {
+    "text_inputs": %TEXT_INPUTS,
+    "text_targets": %TEXT_DECODER_LENGTH,
+    "image_input_samples": %IMAGE_INPUT_SAMPLES,
+    "is_training": False,
+}
+
+from t5x.examples.unified_io import modality_processing
+modality_processing.get_input_modalities.input_modality=["image", "text"]
+modality_processing.get_target_modalities.target_modality=["text"]
+
+from t5x.examples.unified_io import models
+models.EncoderDecoderModel.predict_batch_with_aux:
+    length = %TEXT_DECODER_LENGTH
+    modality = "text"
+
+# Import so any gin configurable method in these files will be registered with gin
+# and thus can be modified by command line
+from t5x.examples.unified_io import network
+from t5x.examples.unified_io.metrics import metrics
+from t5x.examples.unified_io import decoding
+
+# Import so the registration happens
+from t5x.examples.unified_io.data import tasks
+from t5x.examples.unified_io.data import mixtures
+from t5x.examples.unified_io import aux_fns

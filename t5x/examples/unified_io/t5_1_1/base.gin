@@ -1,0 +1,199 @@
+# type: ignore
+
+# T5.1.1 Base model.
+from __gin__ import dynamic_registration
+
+import seqio
+from t5x import adafactor
+from t5x.examples.unified_io import models
+from t5x.examples.unified_io import network
+from t5x.examples.unified_io import config
+from t5x import optimizers
+from t5x import utils
+import optax
+from t5x import trainer
+
+# ------------------- Loss HParam ----------------------------------------------
+Z_LOSS = 0.0001
+LABEL_SMOOTHING = 0.0
+TEXT_DECODER_LENGTH = None
+IMAGE_DECODER_LENGTH = None
+# NOTE: When fine-tuning the public T5 checkpoints (trained in T5 MeshTF)
+# the loss normalizing factor should be set to pretraining batch_size *
+# target_token_length.
+LOSS_NORMALIZING_FACTOR = None
+LOSS_NORMALIZING_BY_WEIGHT_SUM = True
+# Dropout should be specified in the "run" files
+DROPOUT_RATE = 0.0
+DROPOUT_BROADCAST_DIMS = (-2, )
+DROPPATH_RATE = 0.0
+
+# Vocabulary (shared by encoder and decoder)
+VOCABULARY = @seqio.SentencePieceVocabulary()
+seqio.SentencePieceVocabulary.sentencepiece_model_file = "gs://t5-data/vocabs/cc_all.32000.100extra/sentencepiece.model"
+
+# ------------------- Optimizer ------------------------------------------------
+# `learning_rate` is set by `Trainer.learning_rate_fn`.
+# In this case, we choose to switch to the AdamW optimizer with gradient clip.
+OPTIMIZER = None
+
+# ------------------- Model ----------------------------------------------------
+MODEL = @models.EncoderDecoderModel()
+models.EncoderDecoderModel:
+  module = @network.Transformer()
+  input_vocabulary = %VOCABULARY
+  output_vocabulary = %VOCABULARY
+  optimizer_def = %OPTIMIZER
+  z_loss = %Z_LOSS
+  label_smoothing = %LABEL_SMOOTHING
+  loss_normalizing_factor = %LOSS_NORMALIZING_FACTOR
+  loss_normalizing_by_weight_sum = %LOSS_NORMALIZING_BY_WEIGHT_SUM
+
+# ------------------- Network specification ------------------------------------
+network.Transformer.config = @config.T5Config()
+
+config.T5Config:
+  vocab_size = 33280  # vocab size rounded to a multiple of 128 for TPU efficiency
+  image_vocab_size = 16512 # vocab size rounded to a multiple of 128 for TPU efficiency
+  image_patch_size = 16
+  audio_vocab_size = 8320 # vocab size rounded to a multiple of 128 for TPU efficiency
+  audio_patch_size = 16
+
+  dtype = 'bfloat16'
+  emb_dim = 768
+  num_heads = 12
+  num_encoder_layers = 12
+  num_decoder_layers = 12
+  head_dim = 64
+  mlp_dim = 2048
+  mlp_activations = ('silu', 'linear')
+  dropout_rate = %DROPOUT_RATE
+  dropout_broadcast_dims = %DROPOUT_BROADCAST_DIMS
+  logits_via_embedding = True
+  float32_attention_logits = True
+  decoder_xattention_internval = 1
+  
+  image_tokenizer_type = 'vqgan'
+
+from t5x.examples.unified_io import modality_processing
+modality_processing.get_input_modalities:
+  image_vit_cfg = @config.ImageVitFeatureConfig()
+  audio_vit_cfg = @config.AudioVitFeatureConfig()
+  image_history_cfg = @config.ImageResamplerConfig()
+  audio_history_cfg = @config.AudioResamplerConfig()
+  use_image_vit = True
+  use_audio_vit = True
+  use_image_history_vit = True
+  use_audio_history_vit = True
+
+modality_processing.get_target_modalities:
+  image_vae_config = @config.VAEConfig()
+  audio_vae_config = @config.AudioViTVQGANConfig()
+
+config.VAEConfig:
+  embed_dim = 256
+  n_embed = 16384
+  double_z = False
+  z_channels = 4
+  resolution = 256
+  in_channels = 3
+  out_ch = 3
+  ch = 128
+  ch_mult = (1,2,2,4)
+  num_res_blocks = 2
+  attn_resolutions = (32,)
+  dropout = 0
+  default_input_size = (256,256)
+  patch_size = (8, 8)
+
+config.AudioViTVQGANConfig:
+  vocab_size = 8192
+  proj_dim = 32
+  # Transformers
+  encoder_hidden_size = 512
+  encoder_num_layers = 8
+  encoder_mlp_dim = 2048
+  encoder_num_heads = 8
+  encoder_head_dim = 64
+  
+  encoder_hidden_size = 512
+  encoder_num_layers = 8
+  encoder_mlp_dim = 2048
+  encoder_num_heads = 8
+  encoder_head_dim = 64
+
+  dropout_rate = 0.0
+  droppath_rate = 0.0
+  attention_dropout_rate = 0.0
+  use_bias = False
+  act_fn = 'relu'
+  # PE
+  add_position_embedding = False
+  # Misc.
+  dtype = 'bfloat16'
+  default_input_size = (128, 256) # we need to keep this to make it
+  patch_size = (8, 8)
+
+  output_channel = 1
+  use_decoder = True
+
+config.ImageVitFeatureConfig:
+  patch_size = 16
+  pos_patch_size = 16
+  emb_dim = 768
+  num_heads = 12
+  num_layers = 11 # -2 layer
+  mlp_dim = 3072
+  mlp_activations = ('gelu', )
+  dropout_rate = 0.0
+  dropout_broadcast_dims = ()
+  default_input_size = (256, 256)
+  num_pos = 197
+  dtype = 'float32'
+
+config.AudioVitFeatureConfig:
+  patch_size = 16
+  emb_dim = 768
+  num_heads = 12
+  num_layers = 11  # -2 layer
+  mlp_dim = 3072
+  mlp_activations = ('gelu', )
+  dropout_rate = 0.0
+  dropout_broadcast_dims = ()
+  default_input_size = (256, 128)
+  transpose_input = True
+  dtype = 'float32'
+
+config.ImageResamplerConfig:
+  dtype = 'bfloat16'
+  resampler_type = 'perceiver'
+  max_frames = 8
+  latents_size = 32
+  emb_dim = 768
+  num_heads = 12
+  num_layers = 2
+  xattention_index = (0, 1)
+  head_dim = 64
+  mlp_dim = 3072
+  mlp_activations = ('gelu',)
+  dropout_broadcast_dims = (-2,)
+  droppath_rate = 0.0
+  layer_drop = 0.0
+  dropout_rate = 0.0
+
+config.AudioResamplerConfig:
+  dtype = 'bfloat16'
+  resampler_type = 'perceiver'
+  max_frames = 8
+  latents_size = 16
+  emb_dim = 768
+  num_heads = 12
+  num_layers = 2
+  xattention_index = (0, 1)
+  head_dim = 64
+  mlp_dim = 3072
+  mlp_activations = ('gelu',)
+  dropout_broadcast_dims = (-2,)
+  droppath_rate = 0.0
+  layer_drop = 0.0
+  dropout_rate = 0.0

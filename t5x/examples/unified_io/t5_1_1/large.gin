@@ -1,0 +1,49 @@
+# type: ignore
+
+# T5.1.1 Large model.
+
+include 't5x/examples/unified_io/t5_1_1/base.gin'  # imports vocab, optimizer and model.
+
+EMBED_DIM = 1024
+MLP_DIM = 2816
+NUM_HEADS = 16
+HEAD_DIM = 64
+
+from t5x.examples.unified_io import config
+network.Transformer.config = @config.T5Config()
+config.T5Config:
+  emb_dim = %EMBED_DIM
+  num_heads = %NUM_HEADS
+  num_encoder_layers = 24
+  num_decoder_layers = 24
+  head_dim = %HEAD_DIM
+  mlp_dim = %MLP_DIM
+  decoder_xattention_internval = 1
+
+config.ImageResamplerConfig:
+  dtype = 'bfloat16'
+  resampler_type = 'perceiver'
+  emb_dim = 768
+  num_heads = 12
+  head_dim = 64
+  mlp_dim = 2048
+  num_layers = 2
+  xattention_index = (0, 1)
+  dropout_broadcast_dims = (-2,)
+  mlp_activations = ('gelu',)
+  max_frames = 8
+  latents_size = 32
+
+config.AudioResamplerConfig:
+  resampler_type = 'perceiver'
+  dtype = 'bfloat16'
+  emb_dim = 768
+  num_heads = 12
+  head_dim = 64
+  mlp_dim = 2048
+  num_layers = 2
+  xattention_index = (0, 1)
+  dropout_broadcast_dims = (-2,)
+  mlp_activations = ('gelu',)
+  max_frames = 8
+  latents_size = 16
