@@ -78,7 +78,8 @@ setuptools.setup(
     ],
     extras_require={
         'data': ['datasets', 'google-cloud-storage', "resampy"],
-        "demo": ["resampy", 'google-cloud-storage', 'gradio==4.8.0', 'notebook', 'sk-video'],
+        "demo": ["resampy", 'google-cloud-storage', 'gradio==4.8.0', 'torch', 'notebook', 'sk-video'],
+        'gpu': ["jax[cuda12_pip]"],
         # Cloud TPU requirements.
         'tpu': [f'jax[tpu]==0.3.25'],
     },
