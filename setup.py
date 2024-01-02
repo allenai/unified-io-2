@@ -33,12 +33,9 @@ _jaxlib_version = '0.1.76'
 setuptools.setup(
     name='t5x',
     version=__version__,
-    description='T5-eXtended in JAX',
+    description='UnifiedIO 2',
     long_description=_LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    author='Google Inc.',
-    author_email='no-reply@google.com',
-    url='http://github.com/google-research/t5x',
     license='Apache 2.0',
     packages=setuptools.find_packages(),
     package_data={
@@ -68,7 +65,6 @@ setuptools.setup(
         'pycocoevalcap',
         'tensorstore >= 0.1.20',
         'librosa',
-        'SoundFile',
         'scikit-image',
         'wandb==0.14.0',
         "optax==0.1.4",
@@ -78,17 +74,13 @@ setuptools.setup(
     ],
     extras_require={
         'data': ['datasets', 'google-cloud-storage', "resampy"],
-        "demo": ["resampy", 'google-cloud-storage', 'gradio==4.8.0', 'torch', 'notebook', 'sk-video'],
-        'gpu': ["jax[cuda12_pip]"],
+        "demo": ["resampy", 'google-cloud-storage', 'gradio==4.8.0', 'notebook', 'sk-video'],
         # Cloud TPU requirements.
         'tpu': [f'jax[tpu]==0.3.25'],
     },
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
-    keywords='text nlp machinelearning',
 )
