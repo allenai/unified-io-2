@@ -86,7 +86,7 @@ python3 create_data/tfdatasets/coco_all/build.py ~/data/tfds ~/data/vqa ~/data/c
 
 Will upload a tfdataset of COCO data, which we allows tasks such as `image_generation_coco_2017`
 and `image_caption_coco_2017` to be used. Some datasets, such as the refexp datasets, that use
-the public tensoflow catelog might have their own manual pre-processing steps as well
+the public tensoflow catalog might have their own manual pre-processing steps as well
 which will be specified on their webpage.
 
 UnifiedIO 2 contains a large number of tasks, for this initial release we only include
