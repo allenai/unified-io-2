@@ -7,24 +7,22 @@ Install the dependencies with pip
 
 For a TPU:
 ```
-python3 -m pip install -e '.[tpu]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
+python3 -m pip install -e '.[tpu]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
-For a GPU (note we have been using TPUs so GPU setups are not well tested):
+For a GPU/CPU (note we have been using TPUs so GPU setups are not well tested):
 ```
-python3 -m pip install -e '.[gpu]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
+python3 -m pip install -e '.' -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 ```
 
-For a CPU (note we have been using TPUs so GPU setups are not well tested):
-```
-python3 -m pip install -e . -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
-```
 
 Running the demo require additional dependencies, install them with:
 ```
-python3 -m pip install -e '.[demo]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
+python3 -m pip install -e '.[demo]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
+The LLaMa tokenizer also needs to be installed, download the `.model` file from https://github.com/facebookresearch/llama/tree/main?tab=readme-ov-file
+and then update `t5x/examples/unified_io/config.py` so `LLAMA_TOKENIZER_PATH` points to the download location.
 
 ## Checkpoints
 We make checkpoints in the T5X format available on S3:
@@ -36,7 +34,7 @@ We make checkpoints in the T5X format available on S3:
 To download, copy the directory recursively. For example:
 
 ```
-aws s3 --no-sign-request cp --recursive s3://ai2-prior-uio/public/uio2-checkpoints/large-3m
+aws s3 --no-sign-request cp --recursive s3://ai2-prior-uio/public/uio2-checkpoints/large-3m large-3m
 ```
 
 They should be copied to a local disk or to google file storage.
@@ -57,36 +55,36 @@ the correct model size. Then the notebook can be used to start the demo.
 The demo shows how to load the model, parameters, and do inference.
 
 The demo will be slow the first time it is used because the inference function
-needs to be compiled, subsequent calls with similar inputs/outputs will be
+needs to be compiled, subsequent calls with similar inputs/outputs will be 
 much faster.
 
 ## Data
 To train and eval on entire datasets the datasets need to be registered with `seqio` in  `seqio.TaskRegistry`. See
 `t5x/examples/unifiedio/data/tasks.py` for examples. See [seqio](https://github.com/google/seqio)
-for more details on how datasets are managed by seqio.
+for more details on how datasets are managed by seqio. 
 Some dataset require running a pre-processing script before they can be used.
 
 Mke sure `config.MULTITASK_TFDS_DATA_DIR` is updated to
 point to the location to store the datasets.
 
 ### Datasets
-We provided some initial datasets in `t5x/examples/unifiedio/data/tasks.py`, and plan to
-add more soon. Our datasets are generally built one of three ways:
+We provided some initial datasets in `t5x/examples/unifiedio/data/tasks.py`. 
+Our datasets are generally built one of three ways:
 
 1. Constructed as a `tensorflow_dataset` and then uploaded to the location specified in `config.MULTITASK_TFDS_DATA_DIR`
 2. Constructed as a set of tfrecords and uploaded to the same location
 3. Directly using a dataset from https://www.tensorflow.org/datasets/catalog/overview
 
-Datasets built in the first or second way require running a build script before they can be
+Datasets built in the first or second way require running a build script before they can be 
 used. `create_data` contains the needed build scripts. For example running:
 
 ```
 python3 create_data/tfdatasets/coco_all/build.py ~/data/tfds ~/data/vqa ~/data/coco_annotations
 ```
 
-Will upload a tfdataset of COCO data, which we allows tasks such as `image_generation_coco_2017`
-and `image_caption_coco_2017` to be used. Some datasets, such as the refexp datasets, that use
-the public tensoflow catalog might have their own manual pre-processing steps as well
+Will upload a tfdataset of COCO data, which we allows tasks such as `image_generation_coco_2017` 
+and `image_caption_coco_2017` to be used. Some datasets, such as the refexp datasets, that use 
+the public tensoflow catelog might have their own manual pre-processing steps as well
 which will be specified on their webpage.
 
 UnifiedIO 2 contains a large number of tasks, for this initial release we only include
@@ -102,16 +100,16 @@ noised data. This stage is implemented by various preprocessing functions in `un
 The demo shows how to do this for raw inputs.
 To allow this stage to do different pre-processing during training and testing,
 we pass a `is_training` field in sequence_length dictionary to indicate
-whether the dataset is being used for training or testing.
-2. Next `modality_processing.unified_io_preprocessor` is run. This function does various task-general pre-preprocessing steps,
+whether the dataset is being used for training or testing. 
+2. Next `modality_processing.unified_io_preprocessor` is run. This function does various task-general pre-preprocessing steps, 
 such as tokenizing the text, and adds empty values for missing modalities so the output dataset has a consistent set of fields.
 3. Finally `UnifiedIOFeatureConverter` is applied, this can happen
-after multiple datasets have been combined into a `seqio.Mixture`.
+after multiple datasets have been combined into a `seqio.Mixture`. 
 This function will make sure the output dataset has a consistent structure and is padded to have
 fixed-size tensors, as is needed for jax. This dataset can now be batched and passed directly
 into the loss or prediction functions of a UnifiedIO 2 model.
 The padding is determined by the sequence_len dictionary.
-
+   
 To add a dataset, register it with seqio and ensure the last pre-processor
 is `modality_processing.unified_io_preprocessor`. The preceding
 functions should make sure the dataset has the appropriate fields for that functions.
@@ -146,20 +144,20 @@ python3 t5x/train.py --gin_file=t5x/examples/unified_io/t5_1_1/large.gin --gin_f
 ```
 
 ### Modalities
-UnifiedIO 2 can be run on a subset of the supported modality, which makes training more
-efficient. This can be set through the gin-configured parameters in
-`get_input_modalities` and `get_target_modalities`. For example, refexp.gin
+UnifiedIO 2 can be run on a subset of the supported modality, which makes training more 
+efficient. This can be set through the gin-configured parameters in 
+`get_input_modalities` and `get_target_modalities`. For example, refexp.gin 
 only turns on the image/text inputs and text outputs.
 
 ### Sequence Lengths
-Due to jax's fixed size tensor constraint, we by default pad all inputs and targets to the
+Due to jax's fixed size tensor constraint, we by default pad all inputs and targets to the 
 model to the maximum length supported. When training on mixtures where this is excessive,
-this can be tweaked by changing the sequence_lengths used by `seqio`
-For example, refexp,gin reduce the input and output sequence length since
+this can be tweaked by changing the sequence_lengths used by `seqio` 
+For example, refexp,gin reduce the input and output sequence length since 
 refexp has little text.
 
 ### Wandb
-We have modified train.py to use wandb, just make sure a `WANDB_API_KEY` environment variable is set.
+We have modified train.py to use wandb, just make sure a `WANDB_API_KEY` environment variable is set. 
 The gin configurable function `utils.init_wandb` should be modified or configured
 through gin to select the correct name/group/project/entity.
 
@@ -174,8 +172,8 @@ into a single input sequence, it can be turned on with this flag:
 
 During training, two examples will be attempted to be packed in a sequence with total
 input length of 864 input length and target length or 1280. A heuristic algorithm
-will try to find pairs of examples that fit this criteria as data is streamed to
-the training server, if none are found only one example will be used.
+will try to find pairs of examples that fit this criteria as data is streamed to 
+the training server, if none are found only one example will be used. 
 If this happens too frequently it is a good idea to increase the max length.
 Statistics will be logged to wandb to track the packing efficiency.
 
@@ -183,7 +181,7 @@ Statistics will be logged to wandb to track the packing efficiency.
 Evaluations script are run using eval.py, for example:
 
 ```
-python3 t5x/eval.py --gin_file=t5x/examples/unified_io/t5_1_1/large.gin --gin_file=t5x/examples/unified_io/t5_1_1/eval/vision_language.gin --gin.INITIAL_CHECKPOINT_PATH=\"/path/to/large/checkpoint\"
+python3 t5x/eval.py --gin_file=t5x/examples/unified_io/t5_1_1/large.gin --gin_file=t5x/examples/unified_io/t5_1_1/eval/vision_language.gin --gin.CHECKPOINT_PATH=\"large-3m\" --gin.MIXTURE_OR_TASK_NAME=\"refcoco_unc\" --gin.EVAL_OUTPUT_DIR=\"output\"
 ```
 
 The target dataset must have metrics registered with seqio. Evaluations script

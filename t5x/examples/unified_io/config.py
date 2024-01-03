@@ -6,9 +6,13 @@ from flax import struct
 from jax import numpy as jnp
 import math
 
-MULTITASK_TFDS_DATA_DIR = None
+MULTITASK_TFDS_DATA_DIR = "gs://unified-io-2-backup/multitask-datasets"
 if MULTITASK_TFDS_DATA_DIR is None:
   logging.info("Default TFDS dir is not set!")
+
+
+LLAMA_TOKENIZER_PATH = "gs://unified-io-2-backup/tokenizer/llama_tokenizer.model"
+
 
 # Used to control dataset shuffling
 SHUFFLE_BUFFER_SIZE = [100, 200, 200, 200]

@@ -34,8 +34,10 @@ def get_default_vocabulary():
     return seqio.SentencePieceVocabulary(
       "gs://t5-data/vocabs/cc_all.32000/sentencepiece.model", 1000)
   elif config.TOKENIZER == "llama":
+    if not config.LLAMA_TOKENIZER_PATH:
+      raise ValueError("`config.LLAMA_TOKENIZER_PATH` should point to the LLAMA tokenizer`")
     return uio_vocab.SentencePieceVocabulary(
-      "gs://unified-io-2-us-east/tokenizer/llama_tokenizer.model",
+      config.LLAMA_TOKENIZER_PATH,
       extra_ids=DEFAULT_EXTRA_IDS,
       reverse_extra_ids=True,
       modality_extra_id_n_frames=MODALITY_EXTRA_ID_N_FRAMES,
