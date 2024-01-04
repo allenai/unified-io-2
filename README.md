@@ -1,5 +1,5 @@
 # Unified-IO 2
-This repo contains code for Unified-IO 2, including code to run a demo, do training,
+This repo contains code for [Unified-IO 2](https://unified-io-2.allenai.org/), including code to run a demo, do training,
 and do inference. This codebase is modified from [T5X](https://github.com/google-research/t5x).
 
 ## Install
@@ -189,3 +189,5 @@ can be similarly made more efficient by only using the needed modalities and
 choosing the sequence lengths appropriately. Note most of our official results
 come from collecting outputs and then running offline evaluations, the metrics
 here are used mostly for validation scores.
+
+## Citation
