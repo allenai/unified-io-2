@@ -16,7 +16,7 @@ python3 -m pip install -e '.' -f https://storage.googleapis.com/jax-releases/jax
 ```
 
 
-Running the demo require additional dependencies, install them with:
+Running the demo requires additional dependencies, install them with:
 ```
 python3 -m pip install -e '.[demo]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
@@ -45,7 +45,7 @@ Make sure the demo dependencies have been [installed](#Setup).
 
 Then run the demo notebook:
 ```
-python3 -notebook demo.ipynb
+jupyter notebook demo.ipynb
 ```
 
 
@@ -62,9 +62,9 @@ much faster.
 To train and eval on entire datasets the datasets need to be registered with `seqio` in  `seqio.TaskRegistry`. See
 `t5x/examples/unifiedio/data/tasks.py` for examples. See [seqio](https://github.com/google/seqio)
 for more details on how datasets are managed by seqio. 
-Some dataset require running a pre-processing script before they can be used.
+Some datasets require running a pre-processing script before they can be used.
 
-Mke sure `config.MULTITASK_TFDS_DATA_DIR` is updated to
+Make sure `config.MULTITASK_TFDS_DATA_DIR` is updated to
 point to the location to store the datasets.
 
 ### Datasets
@@ -82,20 +82,20 @@ used. `create_data` contains the needed build scripts. For example running:
 python3 create_data/tfdatasets/coco_all/build.py ~/data/tfds ~/data/vqa ~/data/coco_annotations
 ```
 
-Will upload a tfdataset of COCO data, which we allows tasks such as `image_generation_coco_2017` 
+Will upload a tfdataset of COCO data, which allows tasks such as `image_generation_coco_2017` 
 and `image_caption_coco_2017` to be used. Some datasets, such as the refexp datasets, that use 
-the public tensoflow catelog might have their own manual pre-processing steps as well
+the public tensoflow catalog might have their own manual pre-processing steps as well
 which will be specified on their webpage.
 
 UnifiedIO 2 contains a large number of tasks, for this initial release we only include
-a subset but will add more as we test verify additional tasks.
+a subset but will add more as we test and verify additional tasks.
 
 ### Preprocessing
 Pre-processing in UIO2 happens in three stages:
 
 1. Task-specific pre-processing constructs a prompt and builds input and outputs in the supported modalities. This stage needs to resize and pad images into the
 correct sizes, and provide masks to show which parts of the image are padding (typically with `unified_io.data.data_utils.resize_and_pad`).
-Audio segments need to be converted to mel-spectograms, which can also be masked if working with
+Audio segments need to be converted to mel-spectrograms, which can also be masked if working with
 noised data. This stage is implemented by various preprocessing functions in `unified_io.data.preprocessing`.
 The demo shows how to do this for raw inputs.
 To allow this stage to do different pre-processing during training and testing,
@@ -112,15 +112,15 @@ The padding is determined by the sequence_len dictionary.
    
 To add a dataset, register it with seqio and ensure the last pre-processor
 is `modality_processing.unified_io_preprocessor`. The preceding
-functions should make sure the dataset has the appropriate fields for that functions.
+functions should make sure the dataset has the appropriate fields for that function.
 
 ### Prompts
-We our entire set of prompts in `t5x/examples/unified_io/data/prompt_dict`,
+Our entire set of prompts in `t5x/examples/unified_io/data/prompt_dict`,
 we randomly select among these prompts during training.
 
 
 ### Visualization
-We include a visualization script to shows what the data looks like after post-processing:
+We include a visualization script to show what the data looks like after post-processing:
 
 ```
 python3 t5x/examples/unified_io/scripts/dataset_visualize.py refcoco_unc viz --override```
@@ -172,13 +172,13 @@ into a single input sequence, it can be turned on with this flag:
 
 During training, two examples will be attempted to be packed in a sequence with total
 input length of 864 input length and target length or 1280. A heuristic algorithm
-will try to find pairs of examples that fit this criteria as data is streamed to 
+will try to find pairs of examples that fit this criterion as data is streamed to 
 the training server, if none are found only one example will be used. 
 If this happens too frequently it is a good idea to increase the max length.
 Statistics will be logged to wandb to track the packing efficiency.
 
 ## Evaluation
-Evaluations script are run using eval.py, for example:
+Evaluation script are run using eval.py, for example:
 
 ```
 python3 t5x/eval.py --gin_file=t5x/examples/unified_io/t5_1_1/large.gin --gin_file=t5x/examples/unified_io/t5_1_1/eval/vision_language.gin --gin.CHECKPOINT_PATH=\"large-3m\" --gin.MIXTURE_OR_TASK_NAME=\"refcoco_unc\" --gin.EVAL_OUTPUT_DIR=\"output\"
@@ -187,5 +187,5 @@ python3 t5x/eval.py --gin_file=t5x/examples/unified_io/t5_1_1/large.gin --gin_fi
 The target dataset must have metrics registered with seqio. Evaluations script
 can be similarly made more efficient by only using the needed modalities and
 choosing the sequence lengths appropriately. Note most of our official results
-come from collecting outputs and the running offline evaluations, the metrics
+come from collecting outputs and then running offline evaluations, the metrics
 here are used mostly for validation scores.
