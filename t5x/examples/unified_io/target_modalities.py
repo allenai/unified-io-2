@@ -99,17 +99,6 @@ class BasicDecoder(nn.Module):
 class TargetTextEncoder(ModalityEncoder):
   """Tokenize and embed target text, handles multiple target texts"""
 
-  def __init__(self):
-    super().__init__()
-    vocab = get_default_vocabulary()
-    if hasattr(vocab, "bos_id"):
-      self._bos_id = vocab.bos_id
-    else:
-      # For t5x tokenizer that use the pad token
-      self._bos_id = vocab.pad_id
-    self._eos_id = vocab.eos_id
-    self._pad_id = vocab.pad_id
-
   def preprocess_inputs(self, features, output_features, sequence_length) -> Dict:
     vocab = output_features[f'targets/text/tokens'].vocabulary
 
@@ -168,6 +157,7 @@ class TargetTextEncoder(ModalityEncoder):
 
   def convert_inputs(self, features, sequence_length) -> Dict:
     # Support old style and new style sequence_lengths
+    voc = get_default_vocabulary()
     text_len = sequence_length.get("text_targets")
     if text_len is None:
       text_len = sequence_length["targets/text/tokens"]
@@ -176,17 +166,17 @@ class TargetTextEncoder(ModalityEncoder):
       # TODO trimming here is a bit questionable since it might trim EOS, trimming
       # should really happen between tokenization and appending EOS, but keep for now
       # since older versions did this too
-      features[k] = trim_or_pad_tf(v, text_len, pad_constant=self._pad_id)
+      features[k] = trim_or_pad_tf(v, text_len, pad_constant=voc.pad_id)
     tokens = features.pop("tokens")
     features["targets"] = tokens
 
     features["inputs"] = make_autoregressive_inputs(
-      tokens, sequence_id=features.get("segment_ids"), bos_id=self._bos_id
+      tokens, sequence_id=features.get("segment_ids"), bos_id=voc.pad_id
     )
 
     # remove the end token mask here, assume eos_id is larger than pad_id
-    if tf.math.reduce_sum(tokens) > self._eos_id:   # > 1
-      features["mask"] = tf.cast(tokens > self._pad_id, tf.int32)
+    if tf.math.reduce_sum(tokens) > voc.eos_id:   # > 1
+      features["mask"] = tf.cast(tokens > voc.pad_id, tf.int32)
     else:
       features["mask"] = tf.cast(tf.zeros(tokens.shape), tf.int32)
     return features
