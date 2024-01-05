@@ -17,7 +17,7 @@ from t5x.utils import TrainStateInitializer, RestoreCheckpointConfig, LegacyChec
 
 
 def get_model(model_size, input_modalities=None, target_modalities=None,
-              gin_bindings: Optional[List[str]]=None):
+              gin_bindings: Optional[List[str]]=None, dtype="bfloat16"):
   """Return a EncoderDecoder model and configure the code to support that model
 
   This will also configure the pre-processing functions to be consistent with returned model
@@ -36,6 +36,16 @@ def get_model(model_size, input_modalities=None, target_modalities=None,
       bindings.append(f"get_input_modalities.input_modality={input_modalities}")
     if target_modalities:
       bindings.append(f"get_target_modalities.target_modality={target_modalities}")
+    if dtype != "bfloat16":
+      bindings += [f"{x}.dtype=\"float32\"" for x in [
+        "T5Config",
+        "AudioViTVQGANConfig",
+        "VAEConfig",
+        "ImageVitFeatureConfig",
+        "AudioVitFeatureConfig",
+        "ImageResamplerConfig",
+        "AudioResamplerConfig",
+      ]]
     _get = gin.configurable(_get)
     gin.parse_config_files_and_bindings(
       config_files=[f"t5x/examples/unified_io/t5_1_1/{model_size}.gin"],
