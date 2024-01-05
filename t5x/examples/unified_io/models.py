@@ -259,10 +259,6 @@ class EncoderDecoderModel(BaseModel):
     batch = {k: v for k, v in batch.items() if k.startswith("inputs/")}
     batch.update(target_features)
 
-    if alpha == 0 and negative_prompt is not None:
-      logging.info("Negative prompt given but alpha=0, ignoring")
-      negative_prompt = None
-
     if negative_prompt is not None:
       bs = batch['inputs/text/tokens'].shape[0]
       np_bs = negative_prompt['inputs/text/tokens'].shape
