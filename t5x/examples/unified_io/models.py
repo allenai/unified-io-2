@@ -261,7 +261,7 @@ class EncoderDecoderModel(BaseModel):
 
     if negative_prompt is not None:
       bs = batch['inputs/text/tokens'].shape[0]
-      np_bs = negative_prompt['inputs/text/tokens'].shape
+      np_bs = negative_prompt['inputs/text/tokens'].shape[0]
       if np_bs == 1 and bs > 1:
         # Assume the negative prompt is the same of all inputs
         clf_free_batch = {k: jnp.array(np.repeat(v, bs, axis=0)) for k, v in negative_prompt.items()}
