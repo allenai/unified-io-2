@@ -15,7 +15,6 @@ For a GPU/CPU (note we have been using TPUs so GPU setups are not well tested):
 python3 -m pip install -e '.' -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 ```
 
-
 Running the demo requires additional dependencies, install them with:
 ```
 python3 -m pip install -e '.[demo]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html
@@ -34,10 +33,12 @@ We make checkpoints in the T5X format available on S3:
 To download, copy the directory recursively. For example:
 
 ```
-aws s3 --no-sign-request cp --recursive s3://ai2-prior-uio/public/uio2-checkpoints/large-3m large-3m
+aws s3 --no-sign-request cp --recursive s3://ai2-prior-uio/public/uio2-checkpoints/large-3m large-3m --exclude "state*"  
 ```
 
-They should be copied to a local disk or to google file storage.
+They should be copied to a local disk or to google file storage. Here, the `--exclude "state*"`
+flag excludes the optimizer state from the download, it can be removed if you want
+to continue training the checkpoint from the current optimizer state.
 
 ## Demo
 To run the model interactively the demo notebook can be run.
