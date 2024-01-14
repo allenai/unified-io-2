@@ -192,3 +192,12 @@ come from collecting outputs and then running offline evaluations, the metrics
 here are used mostly for validation scores.
 
 ## Citation
+
+```bibtex
+@article{lu2023uio2,
+  title   = {Unified-IO 2: Scaling Autoregressive Multimodal Models with Vision, Language, Audio, and Action}, 
+  author  = {Jiasen Lu and Christopher Clark and Sangho Lee and Zichen Zhang and Savya Khosla and Ryan Marten and Derek Hoiem and Aniruddha Kembhavi},
+  journal = {arXiv preprint arXiv:2312.17172},
+  year    = {2023},
+}
+```
