@@ -89,6 +89,8 @@ def get_parameters(model, model_checkpoint: str = None,
       param_axes = train_state_initializer.train_state_axes.params
       params = freeze(train_state.params)
   else:
+    model_checkpoint = os.path.abspath(os.path.expanduser(model_checkpoint))
+    assert os.path.exists(model_checkpoint), f"{model_checkpoint=} does not exist!"
     logging.info(f"Loading model weights from {model_checkpoint}...")
     input_shapes, input_types = get_input_spec(1)
     if partitioner is not None:
