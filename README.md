@@ -2,6 +2,9 @@
 This repo contains code for [Unified-IO 2](https://unified-io-2.allenai.org/), including code to run a demo, do training,
 and do inference. This codebase is modified from [T5X](https://github.com/google-research/t5x).
 
+## News:
+- We release the source code of VIT-VQGAN in JAX, which is used to train our audio tokenizer. Details can be found [here](https://github.com/jiasenlu/vit-vqgan-jax/)
+
 ## Install
 Install the dependencies with pip
 
