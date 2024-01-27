@@ -8,6 +8,8 @@ and do inference. This codebase is modified from [T5X](https://github.com/google
 ## Install
 Install the dependencies with pip
 
+- **Note:** Since this project has taken quite a long time, some of the packages we used are from older versions. We recently discovered that importing `orbax.checkpoint` may cause conflicts for `dtype="bfloat16"` with JAX when using Python 3.9, but it still works with **Python 3.8** (e.g., 3.8.10, which is the default in TPU VMs). This issue is possibly due to internal changes in orbax.checkpoint and pip.
+
 For a TPU:
 ```
 python3 -m pip install -e '.[tpu]' -f https://storage.googleapis.com/jax-releases/libtpu_releases.html -f https://storage.googleapis.com/jax-releases/jax_releases.html

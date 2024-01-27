@@ -70,6 +70,7 @@ setuptools.setup(
         "optax==0.1.4",
         "tqdm",
         "transforms3d==0.4.1",
+        "pyglove==0.4.3",
         "seqio==0.0.8",
     ],
     extras_require={
